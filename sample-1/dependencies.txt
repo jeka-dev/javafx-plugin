@@ -1,0 +1,11 @@
+# Syntax : https://jeka-dev.github.io/jeka/reference/api-project/#dependencies_txt
+[version]
+org.junit:junit-bom:5.12.2@pom
+
+[compile-only]
+org.openjfx:javafx-controls
+org.openjfx:javafx-graphics
+org.openjfx:javafx-fxml
+
+[test]
+org.junit.jupiter:junit-jupiter
