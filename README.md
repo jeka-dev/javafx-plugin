@@ -41,7 +41,7 @@ From here, you can now code your application and execute it using one of the cla
 ## Install your app anywhere
 
 By pushing to a git repository, your application can be runnable or installable anywhere, without extra effort.
-Even on machine where no Java nor JavaFX is installed.
+Even on a machine where no Java nor JavaFX is installed.
 - `jeka app: install repo=your_app_git_repo_url`
 
 ## Run in the IDE
