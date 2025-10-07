@@ -6,9 +6,11 @@ import dev.jeka.core.api.depmanagement.resolution.JkResolvedDependencyNode;
 import dev.jeka.core.api.file.JkPathSequence;
 import dev.jeka.core.api.java.JkJavaVersion;
 import dev.jeka.core.api.project.JkProject;
+import dev.jeka.core.api.system.JkAnsi;
 import dev.jeka.core.api.utils.JkUtilsString;
 import dev.jeka.core.tool.*;
 import dev.jeka.core.tool.builtins.project.ProjectKBean;
+import dev.jeka.core.tool.builtins.tooling.nativ.NativeKBean;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
+@JkDoc("Provides JavaFX support to Jeka projects.")
 public class JavafxKBean extends KBean {
 
     private static final String JAVAFX_GROUP = "org.openjfx";
@@ -34,17 +36,6 @@ public class JavafxKBean extends KBean {
     @JkInject
     private ProjectKBean projectKBean;
 
-    @Override
-    protected void init() {
-        if (JkUtilsString.isBlank(version)) {
-            if (projectKBean.project.getJvmTargetVersion() != null) {
-                version = projectKBean.project.getJvmTargetVersion().toString();
-            } else {
-                version = JkJavaVersion.ofCurrent().toString();
-            }
-        }
-    }
-
     @JkPostInit
     private void postInit(ProjectKBean projectKBean) {
         JkProject project = projectKBean.project;
@@ -54,7 +45,7 @@ public class JavafxKBean extends KBean {
                               withJavafxClassifierDeps(repos, resolveResult, osClassifier)
         );
         project.runJavaOptionCustomizer.append(options -> enhanceOptions(options, project));
-        project.compilation.dependencies.addVersionProvider(JkVersionProvider.of("org.openjfx:javafx-*", version));
+        project.compilation.dependencies.addVersionProvider(JkVersionProvider.of("org.openjfx:javafx-*", effectiveVersion()));
     }
 
     @JkDoc("Prints JVM module options needed to run the application")
@@ -62,6 +53,27 @@ public class JavafxKBean extends KBean {
         List<String> options = new ArrayList<>();
         enhanceOptions(options, projectKBean.project);
         System.out.println(String.join(" ", options));
+    }
+
+    @JkDoc("Prints information about the JavaFX configuration")
+    public void info() {
+        System.out.println("JavaFX version       : " + effectiveVersion());
+        System.out.println("Target OS            : " + targetOs);
+        System.out.println("Target Arch          : " + targetArch);
+        System.out.println("Native lib classifier: " + fullClassifier());
+        System.out.printf("Execute %s to get the JVM module options.%n", JkAnsi.yellow("jeka javafx: jvmOptions"));
+    }
+
+
+    private String effectiveVersion() {
+        if (JkUtilsString.isBlank(version)) {
+            if (projectKBean.project.getJvmTargetVersion() != null) {
+                return projectKBean.project.getJvmTargetVersion().toString();
+            } else {
+                return JkJavaVersion.ofCurrent().toString();
+            }
+        }
+        return version;
     }
 
     private void enhanceOptions(List<String> options, JkProject project) {
@@ -100,7 +112,9 @@ public class JavafxKBean extends KBean {
     }
 
     private String fullClassifier() {
-        return osClassifier(targetOs) + "-" + targetArch;
+        String osClassifier = osClassifier(targetOs);
+        return needAarch(targetOs, targetArch) ?
+                osClassifier + "-" + targetArch : osClassifier;
     }
 
     private JkPathSequence javafxModulePath(JkProject project) {
@@ -124,10 +138,13 @@ public class JavafxKBean extends KBean {
                 .filter(filenames -> "javafx".equals(filenames[0]))
                 .map(filename -> filename[0] + "." + filename[1])
                 .collect(Collectors.toList());
-
     }
 
-
-
+    private static boolean needAarch(String os, String arch) {
+        if ("windows".equalsIgnoreCase(os)) {
+            return false;
+        }
+        return "aarch64".equals(arch);
+    }
 
 }
