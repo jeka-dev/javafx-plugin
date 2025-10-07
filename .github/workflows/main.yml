@@ -22,4 +22,4 @@ jobs:
         JEKA_CENTRAL_PORTAL_SIGN_KEY: ${{ secrets.GPG_SECRET_KEY}}
         JEKA_CENTRAL_PORTAL_SIGN_KEY_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        ./jeka -cp=dev.jeka:centralportal-plugin base: pack centralportal: publish --stacktrace --inspect -v
+        ./jeka -cp=dev.jeka:centralportal-plugin base: pack centralportal: publish --stacktrace
