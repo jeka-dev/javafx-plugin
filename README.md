@@ -3,7 +3,7 @@
 
 # JavaFX plugin for JeKa
 
-Build and run JavaFX application from source.
+Build and run JavaFX application from source. This plugins adapts the `Project` KBean wto make JavaFX setup a breeze.
 
 ## Features
 
@@ -52,5 +52,7 @@ To grab those options, execute `jeka javafx: jvmOptions` and copy-paste the resu
 ## Example
 
 This repository contains a basic JavaFX application example in *src/main/Java*
+
+Visit also https://github.com/djeang/devtools which is an JavaFX application built with JeKa.
 
 
