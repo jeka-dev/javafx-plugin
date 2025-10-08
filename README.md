@@ -56,5 +56,3 @@ To grab those options, execute `jeka javafx: jvmOptions` and copy-paste the resu
 ## Example
 
 - https://github.com/djeang/devtools A graphical toolbox for developers, ported from Maven to Jeka.
-
-
