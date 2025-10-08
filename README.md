@@ -3,18 +3,20 @@
 
 # JavaFX plugin for JeKa
 
-Build and run JavaFX application from source. This plugins adapts the `Project` KBean wto make JavaFX setup a breeze.
+Build and run a JavaFX application from the source. 
+This plugin adapts the `Project` KBean to simplify the JavaFX setup process.
 
 ## Features
 
-- Declare simple JavaFX dependencies, the plugin will setup native dependencies for you.
-- Handle JavaFX module management to let JavaFX execute from source code
-- Run everywhere without needing to package the application
+- Use basic JavaFX dependencies; the plugin automatically manages native setup for you.
+- Manage JavaFX modules/kit behind the scene.
+- Run JavaFX apps on any platform directly from a Git repo, no packaging needed.
 
 ## How to Use
 
-Import the plugin from maven and activate in your *jeka.properties* file.
-Mentioning the JavaFX version is optional, as per default, it will use the same version that the project or running JDK.
+Import the plugin and activate it in your *jeka.properties* file.  
+
+Specifying the JavaFX version is optional. By default, it uses the version of the project's JDK or the running JDK.
 
 ```properties
 jeka.classpath=dev.jeka:javafx-plugin:0.11.55-0
@@ -36,13 +38,15 @@ org.openjfx:javafx-fxml
 From here, you can now code your application and execute it using one of the classic command:
 - `jeka project: runMain`
 - `jeka project: runJar`
-- `jeka -p`
+- `jeka -p` (directly run the app bypassing the JeKa engine)
 
 ## Install your app anywhere
 
-By pushing to a git repository, your application can be runnable or installable anywhere, without extra effort.
-Even on a machine where no Java nor JavaFX is installed.
+Pushing to a Git repository lets your app run or install anywhere, with no extra work— even on machines without Java or JavaFX.
+
+To install and run a JavaFX app stored in a Git repo:
 - `jeka app: install repo=your_app_git_repo_url`
+- `jeka app: install repo=your_app_git_repo_url#0.1.0` (to specify a Git tag)
 
 ## Run in the IDE
 
