@@ -55,8 +55,6 @@ To grab those options, execute `jeka javafx: jvmOptions` and copy-paste the resu
 
 ## Example
 
-This repository contains a basic JavaFX application example in [sample-1](sample-1) directory.
-
-Visit also https://github.com/djeang/devtools which is an JavaFX application built with JeKa.
+- https://github.com/djeang/devtools A graphical toolbox for developers, ported from Maven to Jeka.
 
 
