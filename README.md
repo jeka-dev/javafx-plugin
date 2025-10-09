@@ -14,6 +14,8 @@ This plugin adapts the `Project` KBean to simplify the JavaFX setup process.
 
 ## How to Use
 
+This plugin requires JeKa 0.11.55 or greater.
+
 Import the plugin and activate it in your *jeka.properties* file.  
 
 Specifying the JavaFX version is optional. By default, it uses the version of the project's JDK or the running JDK.
