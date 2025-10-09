@@ -14,21 +14,19 @@ This plugin adapts the `Project` KBean to simplify the JavaFX setup process.
 
 ## How to Use
 
-This plugin requires JeKa 0.11.55 or greater.
+*This plugin requires JeKa 0.11.55 or greater.*
 
-Import the plugin and activate it in your *jeka.properties* file.  
-
-Specifying the JavaFX version is optional. By default, it uses the version of the project's JDK or the running JDK.
+1- Import the plugin and activate by specifying the following properties in the *jeka.properties* file.  
 
 ```properties
 jeka.classpath=dev.jeka:javafx-plugin:0.11.55-0
 @javafx=on
 
-## Optional
+## Optional. By default, this uses the version of the project's JDK or the running JDK.
 @javafx.version=25
 ```
 
-Declare needed JavaFX dependencies in the *compile-only* section of your *dependencies.txt* file.
+2- Declare needed JavaFX dependencies in the *compile-only* section of your *dependencies.txt* file.
 
 ```ini
 [compile-only]
@@ -37,18 +35,29 @@ org.openjfx:javafx-graphics
 org.openjfx:javafx-fxml
 ```
 
-From here, you can now code your application and execute it using one of the classic command:
+3- From here, you can now code your application and execute it using one of the classic command:
 - `jeka project: runMain`
 - `jeka project: runJar`
 - `jeka -p` (directly run the app bypassing the JeKa engine)
 
-## Install your app anywhere
+## Distribute your Application
 
-Pushing to a Git repository lets your app run or install anywhere, with no extra work— even on machines without Java or JavaFX.
+### Package-less Distribution
+
+Thanks to the Jeka system, you don't need to package your application as a binary to make it runnable from anywhere.
+
+Any Jeka user can install your app and run it efficiently from its Git source repository. The build happens behind the scenes on the user's machine in a portable way.
 
 To install and run a JavaFX app stored in a Git repo:
 - `jeka app: install repo=your_app_git_repo_url`
 - `jeka app: install repo=your_app_git_repo_url#0.1.0` (to specify a Git tag)
+
+This builds then installs the binary in the PATH of the host machibe. 
+You may create a specific desktop shortcut for convenience.
+
+### Binary Creation
+
+*WORK IN PROGRESS*
 
 ## Run in the IDE
 
