@@ -55,6 +55,8 @@ To install and run a JavaFX app stored in a Git repo:
 This builds then installs the binary in the PATH of the host machibe. 
 You may create a specific desktop shortcut for convenience.
 
+**Tip:** Use the [catalog](https://jeka-dev.github.io/jeka/reference/kbeans-app/) to give visibility to your app.
+
 ### Binary Creation
 
 *WORK IN PROGRESS*
