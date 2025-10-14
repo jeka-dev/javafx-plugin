@@ -10,7 +10,6 @@ import dev.jeka.core.api.system.JkAnsi;
 import dev.jeka.core.api.utils.JkUtilsString;
 import dev.jeka.core.tool.*;
 import dev.jeka.core.tool.builtins.project.ProjectKBean;
-import dev.jeka.core.tool.builtins.tooling.nativ.NativeKBean;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,6 +21,8 @@ import java.util.stream.Collectors;
 public class JavafxKBean extends KBean {
 
     private static final String JAVAFX_GROUP = "org.openjfx";
+
+    private static final String JAVAFX_CLASSIFIER_TESTER_LIB = "org.openjfx:javafx-base:%s:25";
 
     @JkDoc("Version of JavaFX")
     @JkDepSuggest(hint = "org.openjfx:javafx-base:javafx-base:", versionOnly = true)
@@ -40,17 +41,39 @@ public class JavafxKBean extends KBean {
     private void postInit(ProjectKBean projectKBean) {
         JkProject project = projectKBean.project;
         JkRepoSet repos = project.dependencyResolver.getRepos();
-        String osClassifier = osClassifier(targetOs);
         project.dependencyResolver.parameters.addResolveResultCustomizer(resolveResult ->
-                              withJavafxClassifierDeps(repos, resolveResult, osClassifier)
+                              withJavafxClassifierDeps(repos, resolveResult)
         );
+
+        // set java-modules
+        JkPathSequence javafxModulePaths = javafxModulePath(project);
+        project.jpmsModules.modulePathCustomizer.append(
+                modulePaths -> modulePaths.addAll(javafxModulePaths.getEntries()));
+
+        project.jpmsModules.addModulesCustomizer.append(
+                moduleNames -> {
+                    List<String> javafxModuleNames = javafxModuleNames(javafxModulePaths.getEntries());
+                    moduleNames.addAll(javafxModuleNames);
+                });
+
         project.runJavaOptionCustomizer.append(options -> enhanceOptions(options, project));
         project.compilation.dependencies.addVersionProvider(JkVersionProvider.of("org.openjfx:javafx-*", effectiveVersion()));
     }
 
     @JkDoc("Prints JVM module options needed to run the application")
     public void jvmOptions() {
+        JkProject project = projectKBean.project;
         List<String> options = new ArrayList<>();
+        String modulePath = project.jpmsModules.getModulePaths().toPath();
+        if (!modulePath.isEmpty()) {
+            options.add("--module-path");
+            options.add(modulePath);
+        }
+        String addModules = String.join(",", project.jpmsModules.getAddModules());
+        if (!addModules.isEmpty()) {
+            options.add("--add-modules");
+            options.add(addModules);
+        }
         enhanceOptions(options, projectKBean.project);
         System.out.println(String.join(" ", options));
     }
@@ -58,9 +81,7 @@ public class JavafxKBean extends KBean {
     @JkDoc("Prints information about the JavaFX configuration")
     public void info() {
         System.out.println("JavaFX version       : " + effectiveVersion());
-        System.out.println("Target OS            : " + targetOs);
-        System.out.println("Target Arch          : " + targetArch);
-        System.out.println("Native lib classifier: " + fullClassifier());
+        System.out.println("JavaFX lib classifier: " + fullClassifier());
         System.out.printf("Execute %s to get the JVM module options.%n", JkAnsi.yellow("jeka javafx: jvmOptions"));
     }
 
@@ -77,16 +98,11 @@ public class JavafxKBean extends KBean {
     }
 
     private void enhanceOptions(List<String> options, JkProject project) {
-        options.add("--module-path");
-        JkPathSequence javafxModulePaths = javafxModulePath(project);
-        options.add(javafxModulePaths.toPath());
-        options.add("--add-modules");
-        List<String> javafxModuleNames = javafxModuleNames(javafxModulePaths.getEntries());
-        options.add(String.join(",", javafxModuleNames));
         options.add("--enable-native-access=javafx.graphics");
     }
 
-    private JkResolveResult withJavafxClassifierDeps(JkRepoSet repos, JkResolveResult resolveResult, String classifier) {
+    private JkResolveResult withJavafxClassifierDeps(JkRepoSet repos, JkResolveResult resolveResult) {
+        String classifier = fullClassifier();
         List<JkResolvedDependencyNode> addedNodes = resolveResult.getDependencyTree().toFlattenList().stream()
                 .filter(JkResolvedDependencyNode::isModuleNode)
                 .filter(depNode -> JAVAFX_GROUP.equals(depNode.getModuleNodeInfo().getModuleId().getGroup()))
@@ -107,14 +123,13 @@ public class JavafxKBean extends KBean {
         return JkResolveResult.of(mergedNode, resolveResult.getErrorReport());
     }
 
-    private static String osClassifier(String os) {
-        return "Windows".equalsIgnoreCase(os) ? "win" : os;
-    }
-
     private String fullClassifier() {
-        String osClassifier = osClassifier(targetOs);
-        return needAarch(targetOs, targetArch) ?
-                osClassifier + "-" + targetArch : osClassifier;
+        String osClassifier = "Windows".equalsIgnoreCase(targetOs) ? "win" : targetOs;
+        String osArchClassifier = osClassifier + "-" + targetArch;
+        JkRepoSet repos = projectKBean.project.dependencyResolver.getRepos();
+        JkCoordinateFileProxy fileProxy = JkCoordinateFileProxy.of(repos,
+                        String.format(JAVAFX_CLASSIFIER_TESTER_LIB, osArchClassifier));
+        return fileProxy.exists() ? osArchClassifier : osClassifier;
     }
 
     private JkPathSequence javafxModulePath(JkProject project) {
