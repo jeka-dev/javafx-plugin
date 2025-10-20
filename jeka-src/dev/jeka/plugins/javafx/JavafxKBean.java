@@ -12,10 +12,9 @@ import dev.jeka.core.tool.*;
 import dev.jeka.core.tool.builtins.project.ProjectKBean;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JkDoc("Provides JavaFX support to Jeka projects.")
 public class JavafxKBean extends KBean {
@@ -37,27 +36,46 @@ public class JavafxKBean extends KBean {
     @JkInject
     private ProjectKBean projectKBean;
 
+    @JkDoc("""
+           Configures the project KBean to:
+           
+             - Fetch JavaFX native dependencies automatically
+             - Provide JavaFX version management
+             - Set up module-path and add-modules
+           """)
     @JkPostInit
     private void postInit(ProjectKBean projectKBean) {
         JkProject project = projectKBean.project;
+
+        // Add javafx version provider
+        project.compilation.dependencies.addVersionProvider(JkVersionProvider.of("org.openjfx:javafx-*",
+                effectiveVersion()));
+
+        // add javafx
         JkRepoSet repos = project.dependencyResolver.getRepos();
         project.dependencyResolver.parameters.addResolveResultCustomizer(resolveResult ->
                               withJavafxClassifierDeps(repos, resolveResult)
         );
 
-        // set java-modules
+        // For now, memory resolution cache does not work well with resolutionResultCustomizer
+        project.dependencyResolver.setUseInMemoryCache(false);
+
+        // compute --module-path and --add-modules for the project to run the project
         JkPathSequence javafxModulePaths = javafxModulePath(project);
         project.jpmsModules.modulePathCustomizer.append(
-                modulePaths -> modulePaths.addAll(javafxModulePaths.getEntries()));
-
+                modulePaths -> modulePaths.addAll(javafxModulePaths.toList()));
         project.jpmsModules.addModulesCustomizer.append(
                 moduleNames -> {
-                    List<String> javafxModuleNames = javafxModuleNames(javafxModulePaths.getEntries());
+                    List<String> javafxModuleNames = javafxModuleNames(javafxModulePaths.toList()
+                    );
                     moduleNames.addAll(javafxModuleNames);
                 });
 
+
+
+        // Add jvm options to run the project
         project.runJavaOptionCustomizer.append(options -> enhanceOptions(options, project));
-        project.compilation.dependencies.addVersionProvider(JkVersionProvider.of("org.openjfx:javafx-*", effectiveVersion()));
+
     }
 
     @JkDoc("Prints JVM module options needed to run the application")
@@ -103,10 +121,11 @@ public class JavafxKBean extends KBean {
 
     private JkResolveResult withJavafxClassifierDeps(JkRepoSet repos, JkResolveResult resolveResult) {
         String classifier = fullClassifier();
+        final Set<Path> addedFiles = new HashSet<>();
         List<JkResolvedDependencyNode> addedNodes = resolveResult.getDependencyTree().toFlattenList().stream()
                 .filter(JkResolvedDependencyNode::isModuleNode)
                 .filter(depNode -> JAVAFX_GROUP.equals(depNode.getModuleNodeInfo().getModuleId().getGroup()))
-                .map(depNode -> {
+                .flatMap(depNode -> {
                     JkCoordinate platformCoordinate =
                             depNode.getModuleNodeInfo().getResolvedCoordinate().withClassifier(classifier);
                     Path file = JkCoordinateFileProxy.of(repos, platformCoordinate).get();
@@ -114,10 +133,15 @@ public class JavafxKBean extends KBean {
                     Set<String> configurations = depNode.getModuleNodeInfo().getRootConfigurations();
                     JkResolvedDependencyNode.JkFileNodeInfo nodeInfo = JkResolvedDependencyNode.JkFileNodeInfo.of(
                             configurations, fileDependency);
-                    return JkResolvedDependencyNode.ofFileDep(nodeInfo);
 
+                    if (addedFiles.contains(file)) {
+                        return Stream.of();
+                    } else {
+                        addedFiles.add(file);
+                        return Stream.of(JkResolvedDependencyNode.ofFileDep(nodeInfo));
+                    }
                 })
-                .collect(Collectors.toList());
+                .toList();
         JkResolvedDependencyNode root = JkResolvedDependencyNode.ofRoot(addedNodes);
         JkResolvedDependencyNode mergedNode = resolveResult.getDependencyTree().withMerging(root);
         return JkResolveResult.of(mergedNode, resolveResult.getErrorReport());
@@ -133,7 +157,7 @@ public class JavafxKBean extends KBean {
     }
 
     private JkPathSequence javafxModulePath(JkProject project) {
-        JkResolveResult resolveResult = project.dependencyResolver.resolve(project.compilation.dependencies.get());
+        JkResolveResult resolveResult = project.dependencyResolver.resolve("compilation", project.compilation.dependencies.get());
         JkRepoSet repos = project.dependencyResolver.getRepos();
         List<Path> paths = resolveResult.getInvolvedCoordinates().stream()
                 .filter(coordinate -> JAVAFX_GROUP.equals(coordinate.getModuleId().getGroup()))
@@ -153,13 +177,6 @@ public class JavafxKBean extends KBean {
                 .filter(filenames -> "javafx".equals(filenames[0]))
                 .map(filename -> filename[0] + "." + filename[1])
                 .collect(Collectors.toList());
-    }
-
-    private static boolean needAarch(String os, String arch) {
-        if ("windows".equalsIgnoreCase(os)) {
-            return false;
-        }
-        return "aarch64".equals(arch);
     }
 
 }

@@ -1,7 +1,9 @@
 # Syntax : https://jeka-dev.github.io/jeka/reference/api-project/#dependencies_txt
 [version]
 org.junit:junit-bom:5.12.2@pom
-org.openjfx:javafx-*:23
+
+[compile]
+com.google.guava:guava:33.5.0-jre
 
 [compile-only]
 org.openjfx:javafx-controls

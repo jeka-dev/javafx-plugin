@@ -39,3 +39,5 @@ build/
 .DS_Store
 /jeka-output
 /.jeka-work
+/samples/sample-1/jeka-output/
+/samples/sample-1/.jeka-work/
