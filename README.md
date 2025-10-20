@@ -59,7 +59,11 @@ You may create a specific desktop shortcut for convenience.
 
 ### Binary Creation
 
-*WORK IN PROGRESS*
+To create self-contained application (containing the Java runtime), execute the following command:
+
+```shell
+jeka bundle: pack
+```
 
 ## Run in the IDE
 
