@@ -63,11 +63,10 @@ public class JavafxKBean extends KBean {
         // compute --module-path and --add-modules for the project to run the project
         JkPathSequence javafxModulePaths = javafxModulePath(project);
         project.jpmsModules.modulePathCustomizer.append(
-                modulePaths -> modulePaths.addAll(javafxModulePaths.toList()));
+                modulePaths -> modulePaths.addAll(javafxModulePath(project).toList()));
         project.jpmsModules.addModulesCustomizer.append(
                 moduleNames -> {
-                    List<String> javafxModuleNames = javafxModuleNames(javafxModulePaths.toList()
-                    );
+                    List<String> javafxModuleNames = javafxModuleNames(javafxModulePath(project).toList());
                     moduleNames.addAll(javafxModuleNames);
                 });
 
